@@ -42,16 +42,44 @@ final class ColorsLoader {
         let lightHCSuffix = colorParams?.lightHCModeSuffix ?? "_lightHC"
         let darkHCSuffix = colorParams?.darkHCModeSuffix ?? "_darkHC"
 
-        let lightColors = colors
+        let lightPrefix = "light/"
+        let darkPrefix = "dark/"
+
+        var lightColors = colors
             .filter {
                 !$0.name.hasSuffix(darkSuffix) &&
-                !$0.name.hasSuffix(lightHCSuffix) &&
-                !$0.name.hasSuffix(darkHCSuffix)
+                    !$0.name.hasSuffix(lightHCSuffix) &&
+                    !$0.name.hasSuffix(darkHCSuffix) &&
+                    !$0.name.hasPrefix(darkPrefix)
             }
-        let darkColors = filteredColors(colors, suffix: darkSuffix)
+        // remove lightPrefix
+        lightColors = lightColors.map {
+            var newColor = $0
+            if newColor.name.hasPrefix(lightPrefix) {
+                newColor.name = String(newColor.name.dropFirst(lightPrefix.count))
+                return newColor
+            }
+            return $0
+        }
+
+        var darkColors = filteredColors(colors, suffix: darkSuffix)
+        if darkColors.isEmpty {
+            darkColors = filteredColors(colors, prefix: darkPrefix)
+        }
         let lightHCColors = filteredColors(colors, suffix: lightHCSuffix)
         let darkHCColors = filteredColors(colors, suffix: darkHCSuffix)
         return (lightColors, darkColors, lightHCColors, darkHCColors)
+    }
+
+    private func filteredColors(_ colors: [Color], prefix: String) -> [Color] {
+        let filteredColors = colors
+            .filter { $0.name.hasPrefix(prefix) }
+            .map { color -> Color in
+                var newColor = color
+                newColor.name = String(color.name.dropFirst(prefix.count))
+                return newColor
+            }
+        return filteredColors
     }
 
     private func filteredColors(_ colors: [Color], suffix: String) -> [Color] {
